@@ -10,11 +10,9 @@ gen_path = "/scratch/mhuang_lab/ashar36/Power-Law-Random-SAT-Generator/"
 
 o_path = "/scratch/mhuang_lab/ISING_MACHINES/GSET/CUSTOM_SAT/"
 
-work = "p"
-
 alpha = 4.25
 cla_len = 3
-nvars = np.arange(600, 1100, 100)
+nvars = np.arange(300, 600, 50)
 nclas = np.round(nvars * alpha)
 g = "u" # power-law(p)/uniform(u)
 inst = 10
