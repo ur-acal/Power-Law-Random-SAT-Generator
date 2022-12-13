@@ -1,7 +1,7 @@
 import os
 import subprocess
 import numpy as np
-
+import argparse as ap
 ############# NOTE###############
 # Press enter at the end of the run
 #################################
@@ -12,12 +12,21 @@ o_path = "/scratch/mhuang_lab/ISING_MACHINES/GSET/CUSTOM_SAT/"
 
 work = "p"
 
-alpha = 4.25
+parser = ap.ArgumentParser()
+parser.add_argument('--alpha', type=float, default=4.25)
+parser.add_argument('--beta', type=float, default = 5.0)
+parser.add_argument('--n', type=int, nargs='+', required=True)
+parser.add_argument('--power', action='store_true')
+parser.add_argument('--inst', type=int, default=10)
+args = parser.parse_args()
+
+
+alpha = args.alpha
 cla_len = 3
-nvars = np.array([25,35])# np.arange(10, 60, 10)
+nvars = np.array(args.n)# np.arange(10, 60, 10)
 nclas = np.round(nvars * alpha)
-g = "u" # power-law(p)/uniform(u)
-inst = 50
+g = "p" if args.power else 'u'# power-law(p)/uniform(u)
+inst = args.inst
 output = os.path.dirname(gen_path) + '/gen_cmd.sh'
 def main ():
     if not os.path.exists(o_path):
@@ -39,8 +48,8 @@ def main ():
                 filename = "{:}/cust-{:}{:}-0{:}".format(w_path, g, v, s)
 
                 sh_file.write(
-                    "{:}/CreateSAT -g {:} -v {:} -c {:} -k {:} -p 2.5 -f {:} -u 1 -s {:}\n".format(\
-                        gen_path, g, v, c, cla_len, \
+                        "{:}/CreateSAT -g {:} -v {:} -c {:} -k {:} -p {:} -f {:} -u 1 -s {:}\n".format(\
+                        gen_path, g, v, c, cla_len, args.beta,\
                         filename, s))
     # print(cmd)
     stdout = subprocess.Popen(['/bin/bash', output])

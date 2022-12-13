@@ -29,23 +29,24 @@ def check_sat(dimacs: str) -> bool:
         bool: Whether the problem is satisfiable
     """
     completed = sp.run([_exec, dimacs], capture_output=True)
+    
     if re.search(sat_re, completed.stdout.decode()) is None:
         return False
     return True
 
 # Construct variable paths to loop over
-alpha = 4.25 # Ratio of clauses:variables
-_n = np.array([25, 35]) # Variable counts
+alpha = 2.28 # Ratio of clauses:variables
+_n = np.array([500]) # Variable counts
 # _n = np.arange(5, 8).astype(int)
 _m = (_n * alpha).round().astype(int) # clause counts (rounded to nearest int)
 # Formatting strings for the problem class (variable and clause counts)
 #   and the problem instance (variable count and problem number)
-problem_base = 'cust-u{:}-{:}'
-instance_base = 'cust-u{:}-0{:}.cnf'
+problem_base = 'cust-p{:}-{:}'
+instance_base = 'cust-p{:}-0{:}.cnf'
 
 remove_index = lambda x: x[:x.rfind('-')] # Lambda expression to remove the trailing number from a problem instance
 
-instances = range(1, 200) # Which problem instances to check/remove
+instances = range(1, 300) # Which problem instances to check/remove
 
 problems = [problem_base.format(n, m) for n, m in zip(_n, _m)]# Construct list of problem classes
 
@@ -63,7 +64,7 @@ is_sat = np.array([check_sat(p) for p in paths])
 # Get the unsatisfiable problem paths and remove them
 unsat_paths = paths[is_sat == False]
 for i in unsat_paths:
-    os.remove(i)
+   os.remove(i)
 
 # Rename the remaining files to avoid gaps in the instance IDs
 for pdir in problems:
