@@ -6,7 +6,8 @@ import numpy as np
 import subprocess as sp
 from itertools import product
 
-sat_re = re.compile(r'^s\s+SATISFIABLE', re.MULTILINE)
+sat_re = re.compile(r'ASSIGNMENT\s+FOUND', re.MULTILINE)
+# sat_re = re.compile(r's\s+SATISFIABLE', re.MULTILINE)
 local_path = '/home/matt/Documents/remote'
 # Differentiate execution between linux box and bluehive
 if os.path.exists(local_path):
@@ -16,37 +17,40 @@ else:
     _main = '/scratch/mhuang_lab/mburns13'
     _library = '/scratch/mhuang_lab/ISING_MACHINES/GSET'
 
-_exec = os.path.join(_main, 'sat_solvers/kissat-1.0.3-79d8d8f2/build/kissat')
+_exec = os.environ['WALKSAT']
+# _exec = os.environ['KISSAT']
 
 def check_sat(dimacs: str) -> bool:
     """Check if the CNF formula is SAT
 
-    Runs KISSAT in a subprocess to determine if satisfiable
+    Runs Walksat in a subprocess to determine if satisfiable
     Args:
         dimacs (str): Path to DIMACS-formatted file
 
     Returns:
         bool: Whether the problem is satisfiable
     """
-    completed = sp.run([_exec, dimacs], capture_output=True)
-    
-    if re.search(sat_re, completed.stdout.decode()) is None:
+#     completed = sp.run([_exec, dimacs], capture_output=True)
+    completed = sp.run([_exec, dimacs, '-cutoff', '1M', '-numsol','1'], capture_output=True)
+    result = (re.search(sat_re, completed.stdout.decode()) is None)
+    if result:
+        print(dimacs)
         return False
     return True
 
 # Construct variable paths to loop over
-alpha = 2.28 # Ratio of clauses:variables
-_n = np.array([500]) # Variable counts
+alpha = 4.25  # Ratio of clauses:variables
+_n = np.array([300]) # Variable counts
 # _n = np.arange(5, 8).astype(int)
 _m = (_n * alpha).round().astype(int) # clause counts (rounded to nearest int)
 # Formatting strings for the problem class (variable and clause counts)
 #   and the problem instance (variable count and problem number)
-problem_base = 'cust-p{:}-{:}'
-instance_base = 'cust-p{:}-0{:}.cnf'
+problem_base = 'cust-u{:}-{:}'
+instance_base = 'cust-u{:}-0{:}.cnf'
 
 remove_index = lambda x: x[:x.rfind('-')] # Lambda expression to remove the trailing number from a problem instance
 
-instances = range(1, 300) # Which problem instances to check/remove
+instances = range(1, 301) # Which problem instances to check/remove
 
 problems = [problem_base.format(n, m) for n, m in zip(_n, _m)]# Construct list of problem classes
 
@@ -61,6 +65,8 @@ paths = [os.path.join(_library, work, prob) for prob in problem_instances]
 paths = np.array([p for p in paths if os.path.exists(p)])
 # Check which paths are unsat
 is_sat = np.array([check_sat(p) for p in paths])
+breakpoint()
+print('Done checking, removing UNSAT')
 # Get the unsatisfiable problem paths and remove them
 unsat_paths = paths[is_sat == False]
 for i in unsat_paths:
